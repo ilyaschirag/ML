@@ -1,221 +1,171 @@
-import time
-import pytz
-import pandas as pd
-import re
-from datetime import datetime
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
- 
- 
-# --------------------------------------------------
-# PRICE CLEANER
-# --------------------------------------------------
- 
-def clean_price(price_text):
-    if not price_text:
-        return None
+Product_Code,DFN,Specs_Combo,Retailer,Region
+10276802,Apple Macbook Air,M4|16GB|256GB|13,Currys,UK
+10292800,Apple Macbook Air,M5|16GB|512GB|13,Currys,UK
+10292844,Apple Macbook Neo,A18Pro|8GB|256GB|13,Currys,UK
+113473415,Apple Macbook Air,M4|16GB|256GB|13,John Lewis,UK
+115096196,Apple Macbook Air,M5|16GB|512GB|13,John Lewis,UK
+115099099,Apple Macbook Neo,A18Pro|8GB|256GB|13,John Lewis,UK
+13925030,Apple MacBook Air,M4|16GB|256GB|13,Biccamera,JP
+14953133,Apple MacBook Air,M5|16GB|512GB|13,Biccamera,JP
+14956348,Apple Macbook Neo,A18Pro|8GB|256GB|13,Biccamera,JP
+15512210113,Apple MacBook Air,M4|16GB|256GB|13,Walmart,US
+19641524888,Apple MacBook Air,M5|16GB|512GB|13,Walmart,US
+19304227,Apple MacBook Air,M4|16GB|256GB|13,BestBuy,CA
+19717318352,Apple Macbook Neo,A18Pro|8GB|256GB|13,Walmart,US
+19791103,Apple MacBook Air,M5|16GB|512GB|13,BestBuy,CA
+19791903,Apple Macbook Neo,A18Pro|8GB|256GB|13,BestBuy,CA
+2984512,Apple MacBook Air,M4|16GB|256GB|13,Mediamarkt,DE
+3041074,Apple MacBook Air,M5|16GB|512GB|13,Mediamarkt,DE
+3041399,Apple Macbook Neo,A18Pro|8GB|256GB|13,Mediamarkt,DE
+2042863,Apple MacBook Air,M5|16GB|512GB|13,Costco,US
+2046716,Apple Macbook Neo,A18Pro|8GB|256GB|13,Costco,US
+7418860,Apple MacBook Air,M4|16GB|256GB|13,Argos,UK
+7418877,Apple MacBook Air,M4|16GB|256GB|13,Argos,UK
+8181897,Apple MacBook Air,M5|16GB|512GB|13,Argos,UK
+8211664,Apple Macbook Neo,A18Pro|8GB|256GB|13,Argos,UK
+apple-macbook-air-13-inch-with-m4-chip-256gb-16gb-silver,Apple MacBook Air,M4|16GB|256GB|13,JB Hi-Fi,AU
+apple-macbook-air-13-inch-with-m4-chip-256gb-16gb-sky-blue,Apple MacBook Air,M4|16GB|256GB|13,JB Hi-Fi,AU
+apple-macbook-air-13-inch-with-m4-chip-256gb-16gb-starlight,Apple MacBook Air,M4|16GB|256GB|13,JB Hi-Fi,AU
+apple-macbook-air-13-inch-with-m5-chip-512gb-16gb-starlight,Apple MacBook Air,M5|16GB|512GB|13,JB Hi-Fi,AU
+apple-macbook-neo-13-inch-with-a18-pro-chip-256gb-8gb-citrus,Apple Macbook Neo,A18Pro|8GB|256GB|13,JB Hi-Fi,AU
+B0DZD91W4F,Apple MacBook Air,M4|16GB|256GB|13,Amazon,US
+B0DZD958Z8,Apple MacBook Air,M4|16GB|256GB|13,Amazon,UK
+B0DZDBVCS8,Apple MacBook Air,M4|16GB|256GB|13,Amazon,DE
+B0DZD9S5GC,Apple MacBook Air,M4|16GB|256GB|13,Amazon,US
+B0DZDB3LGY,Apple MacBook Air,M4|16GB|256GB|13,Amazon,UK
+B0DZDCFJRW,Apple MacBook Air,M4|16GB|256GB|13,Amazon,UK
+B0DZDD9ZKB,Apple MacBook Air,M4|16GB|256GB|13,Amazon,UK
+B0DZDDRSRF,Apple MacBook Air,M4|16GB|256GB|13,Amazon,FR
+B0DZDF1BKR,Apple MacBook Air,M4|16GB|256GB|13,Amazon,IT
+B0DZDKFFBN,Apple MacBook Air,M4|16GB|256GB|13,Amazon,FR
+B0DZDKSCYY,Apple MacBook Air,M4|16GB|256GB|13,Amazon,IT
+B0DZDQ7SQK,Apple MacBook Air,M4|16GB|256GB|13,Amazon,FR
+B0DZDQHX48,Apple MacBook Air,M4|16GB|256GB|13,Amazon,JP
+B0DZDR6YTB,Apple MacBook Air,M4|16GB|256GB|13,Amazon,IT
+B0DZDX2ZJS,Apple MacBook Air,M4|16GB|256GB|13,Amazon,FR
+B0DZF1LLJW,Apple MacBook Air,M4|16GB|256GB|13,Amazon,JP
+B0DZF762RQ,Apple MacBook Air,M4|16GB|256GB|13,Amazon,AU
+B0GR19X8DC,Apple MacBook Air,M5|16GB|512GB|13,Amazon,CA
+B0GR1493ZV,Apple Macbook Air,M5|16GB|512GB|13,Amazon,US
+B0GR17DBWL,Apple Macbook Air,M5|16GB|512GB|13,Amazon,DE
+B0GR17QD25,Apple Macbook Air,M5|16GB|512GB|13,Amazon,FR
+B0GR19RZV1,Apple Macbook Air,M5|16GB|512GB|13,Amazon,DE
+B0GR19VZ4T,Apple Macbook Air,M5|16GB|512GB|13,Amazon,UK
+B0GR19X8DC,Apple MacBook Air,M5|16GB|512GB|13,Amazon,CA
+B0GR19X8DC,Apple Macbook Air,M5|16GB|512GB|13,Amazon,US
+B0GR19ZS2Z,Apple Macbook Air,M5|16GB|512GB|13,Amazon,IT
+B0GR1B3ZRR,Apple Macbook Air,M5|16GB|512GB|13,Amazon,UK
+B0GR1C2JC9,Apple Macbook Air,M5|16GB|512GB|13,Amazon,IT
+B0GR1DP4GT,Apple Macbook Air,M5|16GB|512GB|13,Amazon,DE
+B0GR1F94KY,Apple MacBook Air,M5|16GB|512GB|13,Amazon,DE
+B0GR1FGY1V,Apple MacBook Air,M5|16GB|512GB|13,Amazon,UK
+B0GR1B3ZRR,Apple MacBook Air,M5|16GB|512GB|13,Amazon,UK
+B0GR1J6T45,Apple MacBook Air,M5|16GB|512GB|13,Amazon,CA
+B0GR1JTFP8,Apple Macbook Air,M5|16GB|512GB|13,Amazon,US
+B0GR1KVPH1,Apple Macbook Air,M5|16GB|512GB|13,Amazon,UK
+B0GR19X8DC,Apple Macbook Air,M5|16GB|512GB|13,Amazon,US
+B0GR1NGNSB,Apple Macbook Air,M5|16GB|512GB|13,Amazon,IT
+B0GR1PZQ8G,Apple Macbook Air,M5|16GB|512GB|13,Amazon,JP
+B0GR1Q41MD,Apple MacBook Air,M5|16GB|512GB|13,Amazon,IT
+B0GR1RPK7S,Apple Macbook Air,M5|16GB|512GB|13,Amazon,JP
+B0GR1T11D6,Apple Macbook Air,M5|16GB|512GB|13,Amazon,JP
+B0GR1VMZRD,Apple Macbook Air,M5|16GB|512GB|13,Amazon,JP
+B0GR1G49JR,Apple Macbook Air,M5|16GB|512GB|13,Amazon,AU
+B0GR1L8HWT,Apple Macbook Air,M5|16GB|512GB|13,Amazon,AU
+B0GR1G49JR,Apple Macbook Air,M5|16GB|512GB|13,Amazon,AU
+B0GR1W24CR,Apple Macbook Air,M5|16GB|512GB|13,Amazon,FR
+B0GR1YQD11,Apple Macbook Air,M5|16GB|512GB|13,Amazon,FR
+B0GR1YRHN1,Apple Macbook Air,M5|16GB|512GB|13,Amazon,FR
+B0GR6KJ72L,Apple Macbook Neo,A18Pro|8GB|256GB|13,Amazon,US
+B0GR6877WY,Apple Macbook Neo,A18Pro|8GB|256GB|13,Amazon,DE
+B0GR6KJ72L,Apple Macbook Neo,A18Pro|8GB|256GB|13,Amazon,CA
+B0GR6BVYS5,Apple Macbook Neo,A18Pro|8GB|256GB|13,Amazon,US
+B0GR6D8W1D,Apple Macbook Neo,A18Pro|8GB|256GB|13,Amazon,DE
+B0GR6DBM61,Apple Macbook Neo,A18Pro|8GB|256GB|13,Amazon,UK
+B0GR6DFDZR,Apple Macbook Neo,A18Pro|8GB|256GB|13,Amazon,UK
+B0GR6F3NC9,Apple Macbook Neo,A18Pro|8GB|256GB|13,Amazon,US
+B0GR6F79MT,Apple Macbook Neo,A18Pro|8GB|256GB|13,Amazon,US
+B0GR6FTC3M,Apple Macbook Neo,A18Pro|8GB|256GB|13,Amazon,DE
+B0GR6GF3H3,Apple Macbook Neo,A18Pro|8GB|256GB|13,Amazon,JP
+B0GR6GRNNS,Apple Macbook Neo,A18Pro|8GB|256GB|13,Amazon,FR
+B0GR6H3NMM,Apple Macbook Neo,A18Pro|8GB|256GB|13,Amazon,IT
+B0GTW9Z7T1,Apple Macbook Neo,A18Pro|8GB|256GB|13,Amazon,UK
+B0GR6JLDLB,Apple Macbook Neo,A18Pro|8GB|256GB|13,Amazon,DE
+B0GR6JM66H,Apple Macbook Neo,A18Pro|8GB|256GB|13,Amazon,UK
+B0GR6FHGXX,Apple Macbook Neo,A18Pro|8GB|256GB|13,Amazon,US
+B0GR6JTZ1Q,Apple Macbook Neo,A18Pro|8GB|256GB|13,Amazon,FR
+B0GR6V43V4,Apple Macbook Neo,A18Pro|8GB|256GB|13,Amazon,AU
+B0GR6KSYG9,Apple Macbook Neo,A18Pro|8GB|256GB|13,Amazon,IT
+B0GR6LPCW6,Apple Macbook Neo,A18Pro|8GB|256GB|13,Amazon,FR
+B0GR6MBRPB,Apple Macbook Neo,A18Pro|8GB|256GB|13,Amazon,FR
+B0GR6PHDXZ,Apple Macbook Neo,A18Pro|8GB|256GB|13,Amazon,JP
+B0GR6SHGG2,Apple Macbook Neo,A18Pro|8GB|256GB|13,Amazon,IT
+B0GR6V43V4,Apple Macbook Neo,A18Pro|8GB|256GB|13,Amazon,AU
+B0GR6WMWQ8,Apple Macbook Neo,A18Pro|8GB|256GB|13,Amazon,IT
+B0GR6WN56S,Apple Macbook Neo,A18Pro|8GB|256GB|13,Amazon,JP
+B0GR79D885,Apple Macbook Neo,A18Pro|8GB|256GB|13,Amazon,AU
+B0GR79PGXC,Apple Macbook Neo,A18Pro|8GB|256GB|13,Amazon,AU
+JJGCQ8RH7G,Apple MacBook Air,M4|16GB|256GB|13,BestBuy,US
+JJGCQLKXL7,Apple MacBook Air,M5|16GB|512GB|13,BestBuy,US
+JJGCQYX95Y,Apple Macbook Neo,A18Pro|8GB|256GB|13,BestBuy,US
+JJGCQYXQ58,Apple Macbook Neo,A18Pro|8GB|256GB|13,BestBuy,US
+JJGCQYXRYZ,Apple Macbook Neo,A18Pro|8GB|256GB|13,BestBuy,US
+JJGCQYXSYR,Apple Macbook Neo,A18Pro|8GB|256GB|13,BestBuy,US
+MacBook Air,Apple MacBook Air,M5|16GB|512GB|13,Apple Direct,AU
+MacBook Air,Apple MacBook Air,M5|16GB|512GB|13,Apple Direct,CA
+MacBook Air,Apple MacBook Air,M5|16GB|512GB|13,Apple Direct,DE
+MacBook Air,Apple MacBook Air,M5|16GB|512GB|13,Apple Direct,FR
+MacBook Air,Apple MacBook Air,M5|16GB|512GB|13,Apple Direct,IT
+MacBook Air,Apple MacBook Air,M5|16GB|512GB|13,Apple Direct,JP
+MacBook Air,Apple MacBook Air,M5|16GB|512GB|13,Apple Direct,UK
+MacBook Air,Apple MacBook Air,M5|16GB|512GB|13,Apple Direct,US
+MacBook Neo,Apple MacBook Neo,A18Pro|8GB|256GB|13,Apple Direct,AU
+MacBook Neo,Apple MacBook Neo,A18Pro|8GB|256GB|13,Apple Direct,CA
+MacBook Neo,Apple MacBook Neo,A18Pro|8GB|256GB|13,Apple Direct,DE
+MacBook Neo,Apple MacBook Neo,A18Pro|8GB|256GB|13,Apple Direct,FR
+MacBook Neo,Apple MacBook Neo,A18Pro|8GB|256GB|13,Apple Direct,IT
+MacBook Neo,Apple MacBook Neo,A18Pro|8GB|256GB|13,Apple Direct,JP
+MacBook Neo,Apple MacBook Neo,A18Pro|8GB|256GB|13,Apple Direct,UK
+MacBook Neo,Apple MacBook Neo,A18Pro|8GB|256GB|13,Apple Direct,US
+mdh74fna,Apple MacBook Air,M5|16GB|512GB|13,Cdiscount,FR
+mdha4fna,Apple MacBook Air,M5|16GB|512GB|13,Cdiscount,FR
+mdhh4fna,Apple MacBook Air,M5|16GB|512GB|13,Cdiscount,FR
+mhfa4fna,Apple Macbook Neo,A18Pro|8GB|256GB|13,Cdiscount,FR
+mhfd4fna,Apple Macbook Neo,A18Pro|8GB|256GB|13,Cdiscount,FR
+mhfh4fna,Apple Macbook Neo,A18Pro|8GB|256GB|13,Cdiscount,FR
+midnight,Apple MacBook Air,M4|16GB|256GB|13,JB Hi-Fi,AU
+5350521,Apple MacBook Air,M5|16GB|512GB|13,Costco,CA
+5350474,Apple MacBook Neo,A18Pro|8GB|256GB|13,Costco,CA
+mbn8pt82io,Apple MacBook Neo,A18Pro|8GB|256GB|13,OfficeWork,AU
+mbam5ts5mt,Apple MacBook Air,M5|16GB|512GB|13,OfficeWork,AU
+100000001009758042,Apple MacBook Neo,A18Pro|8GB|256GB|13,Yodobashi,JP
+100000001009754715,Apple MacBook Air,M5|16GB|512GB|13,Yodobashi,JP
+6671016,Asus Zenbook,Ryzen AI 9|16GB|512GB|14,BestBuy,US
+6671006,Lenovo Yoga,Core Ultra 7|16GB|512GB|16,BestBuy,US
+6672159,Lenovo Yoga,Ryzen AI 5|16GB|512GB|14,BestBuy,US
+6615769,Lenovo Yoga,Core Ultra 5|16GB|512GB|16,BestBuy,US
+6672754,Lenovo Yoga,Ryzen AI 7|24GB|512GB|16,BestBuy,US
+6679155,Dell,Ryzen AI 7|16GB|512GB|14,BestBuy,US
+6671809,Acer Swift Go,Core Ultra 5|16GB|512GB|16,BestBuy,US
+6613865,HP Omnibook,Core Ultra 7|16GB|1TB|16,BestBuy,US
+6615728,Asus Zenbook,Snapdragon X Plus|16GB|512GB|14,BestBuy,US
+6613868,HP Omnibook,Core Ultra 5|16GB|512GB|14,BestBuy,US
+6670420,Samsung Galaxy Book,Core Ultra 7|16GB|512GB|14,BestBuy,US
+6679316,HP Omnibook,Snapdragon X|8GB|256GB|14,BestBuy,US
+6679358,HP Omnibook,Snapdragon X|8GB|256GB|14,BestBuy,US
+6679355,HP Omnibook,Snapdragon X|16GB|256GB|14,BestBuy,US
+6679354,HP Omnibook,Snapdragon X|16GB|256GB|14,BestBuy,US
+6679359,HP Omnibook,Snapdragon X|16GB|512GB|14,BestBuy,US
+6679357,HP Omnibook,Snapdragon X|16GB|512GB|14,BestBuy,US
+6668499,Lenovo IdeaPad,Core i5|16GB|256GB|15.6,BestBuy,US
+6619147,Lenovo IdeaPad,Snapdragon X|16GB|256GB|15.3,BestBuy,US
+6670614,HP Omnibook,Core Ultra 5|16GB|512GB|16,BestBuy,US
+6683771,Dell,Intel Core 5|8GB|512GB|13,BestBuy,US
+6686662,Acer,Intel Core 5|8GB|512GB|14,BestBuy,US ##yha s
+6683772,Dell,Intel Core 5|16GB|512GB|13,BestBuy,US
 
-    text = (
-        str(price_text)
-        .replace("\u202f", " ")
-        .replace("\xa0", " ")
-        .strip()
-    )
+21968449,ASUS,core|i5,FNAC,FR
+21792234,ASUS,core|i5,FNAC,FR
+22699947,ASUS,core|i5,FNAC,FR
 
-    # Extract only the first price-like number
-    match = re.search(
-        r"\d{1,3}(?:[.,]\d{3})+(?:[.,]\d{1,2})?"
-        r"|\d+(?:[.,]\d{1,2})?",
-        text
-    )
-
-    if not match:
-        return None
-
-    value = match.group(0)
-
-    # European format: 1.049,99
-    if "." in value and "," in value:
-        if value.rfind(",") > value.rfind("."):
-            value = value.replace(".", "").replace(",", ".")
-        else:
-            # US/AU format: 1,049.99
-            value = value.replace(",", "")
-
-    # Thousand comma: 1,049
-    elif "," in value:
-        parts = value.split(",")
-
-        if len(parts[-1]) == 3:
-            value = value.replace(",", "")
-        else:
-            value = value.replace(",", ".")
-
-    # Thousand dot: 1.049
-    elif "." in value:
-        parts = value.split(".")
-
-        if len(parts[-1]) == 3:
-            value = value.replace(".", "")
-
-    try:
-        return float(value)
-    except ValueError:
-        return None
- 
-
- 
- 
- 
-# --------------------------------------------------
-# COUNTRY CONFIG
-# --------------------------------------------------
-COUNTRIES = {
-     "US": {
-        "url": "https://www.apple.com/macbook-neo/",
-        # "clicks": [
-        #    '//*[@id="globalnav-list"]/li[2]/div/div/div[2]/ul/li[1]/a/span[1]',
-        #     "(//ul[@class='ChapterNav_chapternav-items__V0rZ8 ChapterNav_chapternav-clip-right__wmb12']/li)[1]"
-        # ],
-        "price_el": "//span[@data-pricing-product='macbook-pro']"
-
-    
-    },
-    "UK": {
-        "url": "https://www.apple.com/uk/macbook-pro/",
-        # "clicks": [
-        #     '//*[@id="globalnav-list"]/li[2]/div/div/div[2]/ul/li[1]/a/span[1]',
-        #     "(//ul[@class='ChapterNav_chapternav-items__V0rZ8 ChapterNav_chapternav-clip-right__wmb12']/li)[1]"
-        # ],
-        "price_el": "//span[@data-pricing-product='macbook-pro']"
-    },
-    "DE": {
-        "url": "https://www.apple.com/de/macbook-pro/",
-        # "clicks": [
-        #     '//*[@id="globalnav-list"]/li[2]/div/div/div[2]/ul/li[1]/a/span[1]',
-        #     "(//ul[@class='ChapterNav_chapternav-items__V0rZ8 ChapterNav_chapternav-clip-right__wmb12']/li)[1]"
-        # ],
-        "price_el": "//span[@data-pricing-product='macbook-pro']"
-    },
-    "FR": {
-        "url": "https://www.apple.com/fr/macbook-pro/",
-        # "clicks": [
-        #         '//*[@id="globalnav-list"]/li[2]/div/div/div[2]/ul/li[1]/a/span[1]',
-        #       "(//ul[@class='ChapterNav_chapternav-items__V0rZ8 ChapterNav_chapternav-clip-right__wmb12']/li)[1]"
-        # ],
-        "price_el": "//span[@data-pricing-product='macbook-pro']"
-    },
-    "CA": {
-        "url": "https://www.apple.com/ca/macbook-pro/",
-        # "clicks": [
-        #     '//*[@id="globalnav-list"]/li[2]/div/div/div[2]/ul/li[1]/a',
-        #     "(//ul[@class='ChapterNav_chapternav-items__V0rZ8 ChapterNav_chapternav-clip-right__wmb12']/li)[1]"
-        # ],
-        "price_el": "//span[@data-pricing-product='macbook-pro']"
-    },
-    "AU": {
-        "url": "https://www.apple.com/au/macbook-pro/",
-        # "clicks": [
-        #     '//*[@id="globalnav-list"]/li[2]/div/div/div[2]/ul/li[1]/a/span[1]',
-        #    "(//ul[@class='ChapterNav_chapternav-items__V0rZ8 ChapterNav_chapternav-clip-right__wmb12']/li)[1]"
-        # ],
-        "price_el": "//span[@data-pricing-product='macbook-pro']"
-    },
-    "JP": {
-        "url": "https://www.apple.com/jp/macbook-pro/",
-        # "clicks": ['//*[@id="globalnav-list"]/li[2]/div/div/div[2]/ul/li[1]/a/span[1]',
-        #            "(//ul[@class='ChapterNav_chapternav-items__V0rZ8 ChapterNav_chapternav-clip-right__wmb12']/li)[1]"
-        # ],
-        "price_el": "//span[@data-pricing-product='macbook-pro']"
-    },
-     "IT": {
-        "url": "https://www.apple.com/it/macbook-pro/",
-        # "clicks": ['//*[@id="globalnav-list"]/li[2]/div/div/div[2]/ul/li[1]/a/span[1]',
-        #            "(//ul[@class='ChapterNav_chapternav-items__V0rZ8 ChapterNav_chapternav-clip-right__wmb12']/li)[1]"
-        # ],
-        "price_el": "//span[@data-pricing-product='macbook-pro']"
-    },
-}
- 
- 
-# --------------------------------------------------
-# SCRAPER
-# --------------------------------------------------
-def scrape_apple_country(region, config):
- 
-    pst_zone = datetime.now(pytz.timezone("America/Los_Angeles"))
- 
-    try:
-        options = Options()
-        options.add_argument("--start-maximized")
-
-        # ✅ Pass options into driver
-        driver = webdriver.Chrome(options=options)
-        wait = WebDriverWait(driver, 30)
-        driver.get(config["url"])
-        time.sleep(4)
- 
-        # for xpath in config["clicks"]:
-        #     wait.until(EC.element_to_be_clickable((By.XPATH, xpath))).click()
-        #     time.sleep(5)
- 
-        price_el = wait.until(
-            EC.presence_of_element_located(
-                (By.XPATH, config["price_el"])
-            )
-        )
- 
-        raw_price = price_el.text.strip()
-        price = clean_price(raw_price)
-        now = datetime.now()
-        return {
-            "Retailer": "Apple Direct",
-            "ProductCode": "MacBook Pro",
-            "DFN": "Apple MacBook Pro",
-            "SpecsCombo": "A18Pro|8GB|256GB|13",
-            "SellingPrice_Local": price,
-            "Region": region,
-            "ScrapedAt": now.strftime("%Y/%m/%d %H:%M:%S"),
-            "dd": now.day,
-            "mm": now.month,
-            "yyyy": now.year
-        }
- 
-    finally:
-        driver.quit()
- 
- 
-# --------------------------------------------------
-# MAIN
-# --------------------------------------------------
-def scrape_apple_all_countries():
- 
-    rows = []
-
- 
-    for country, cfg in COUNTRIES.items():
-        try:
-            print(f"Scraping Apple {country}...")
-            data = scrape_apple_country(country, cfg)
-            rows.append(data)
-            print(f"✔ {country} → {data['SellingPrice_Local']}\n")
- 
-        except Exception as e:
-            print(f"❌ {country} failed → {e}\n")
- 
-    df = pd.DataFrame(rows)
-    return df
- 
- 
-if __name__ == "__main__":
- 
-    apple_df = scrape_apple_all_countries()
-
-    print("\n✅ Apple price scraping completed")
-
-
-
-
+Dell - XPS 13.4" 3K Touchscreen Laptop - Intel Core 5 Series 3 320 2026 - 16GB Memory - 512GB Storage - Sky
